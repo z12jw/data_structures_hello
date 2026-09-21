@@ -50,20 +50,55 @@ class HashMapOpenAddressing:
         return index if first_tombstone == -1 else first_tombstone
             
         
-    def get(self, key: int) -> str:
+    def get(self, key: int) -> str|None:
         """查询操作"""
+        index = self.find_bucket(key)
+        
+        if self.buckets[index] not in [None,self.TOMBSTONE]:
+            return self.buckets[index].val
+        return None
     
     def put(self, key: int, val: str):
         """添加操作"""
+        ## 记得检查负载因子
+        if self.load_factor() > self.load_thres:
+            self.extend()
+            
+        index = self.find_bucket(key)
+        
+        if self.buckets[index] not in [None,self.TOMBSTONE]:
+            self.buckets[index].val = val
+        else:
+            pair = Pair(key,val)
+            self.buckets[index] = pair
+            self.size+=1
         
     def remove(self, key: int):
         """删除操作"""
+        index = self.find_bucket(key)
+        if self.buckets[index] not in [None,self.TOMBSTONE]:
+            self.buckets[index] = self.TOMBSTONE
+            self.size -=1
     
     def extend(self):
         """扩容哈希表"""
+        buckets_tmp = self.buckets
+        self.capacity *= self.extend_ratio
+        self.buckets = [None] * self.capacity
+        self.size = 0
+        for pair in buckets_tmp:
+            if pair not in [None,self.TOMBSTONE]:
+                self.put(pair.key,pair.val)
         
     def print(self):
         """打印哈希表"""
+        for pair in self.buckets:
+            if pair is None:
+                print('None')
+            elif pair is self.TOMBSTONE:
+                print('TOMBSTONE')
+            else :
+                print(pair.key,"->",pair.val)
     
     """Driver Code"""
 if __name__ == "__main__":
